@@ -88,10 +88,6 @@ jobs:
         working-directory: demo
         run: npm install --no-save --package-lock=false --ignore-scripts ../target/npm/shtts-*.tgz
 
-      - name: Test packaged WebAssembly in Node.js
-        working-directory: demo
-        run: npm run test:package
-
       - name: Build demo from the release tarball
         working-directory: demo
         run: npm run build

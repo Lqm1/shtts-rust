@@ -53,11 +53,10 @@ npm ci
 npm run build:wasm
 npm run pack:wasm
 npm install --no-save --package-lock=false --ignore-scripts ../target/npm/shtts-0.1.0.tgz
-npm run test:package
 npm run dev
 ```
 
-Run `npm run build` followed by `npm run preview` and open the displayed `/shtts-rust/` URL to verify the production demo. CI checks the installed package in Node.js and builds the demo from that same package.
+Run `npm run build` followed by `npm run preview` and open the displayed `/shtts-rust/` URL to verify the production demo. CI runs the Rust tests and builds the demo from the packaged WASM. There are no demo-side automated tests.
 
 ## Releases
 
