@@ -1,13 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { Voice } from "shtts-wasm";
+import { Voice, Emotion } from "shtts-wasm";
 import pkg from "shtts-wasm/package.json";
 import type { SynthesisRequest, SynthesisResponse } from "./worker";
+import { parameters } from "./parameters";
+import type { ParameterValues } from "./parameters";
 
-const voices = [Voice.Female, Voice.Male, Voice.Girl, Voice.Boy, Voice.Space];
+const voices = Object.values(Voice).filter((value) => typeof value === "number");
+const emotions = Object.values(Emotion).filter((value) => typeof value === "number");
+const presetLabel = (name: string) => name.replace(/([a-z])([A-Z])/g, "$1 $2");
 
 export default function App() {
   const [text, setText] = useState("");
   const [voice, setVoice] = useState(Voice.Female);
+  const [emotion, setEmotion] = useState<Emotion | undefined>();
+  const [values, setValues] = useState<ParameterValues | null>(null);
   const [busy, setBusy] = useState(true);
   const [status, setStatus] = useState("Loading the speech engine…");
   const [audioUrl, setAudioUrl] = useState("");
@@ -18,7 +24,10 @@ export default function App() {
     worker.current = engine;
     engine.onmessage = ({ data }: MessageEvent<SynthesisResponse>) => {
       setBusy(false);
-      if (data.kind === "ready") setStatus("Ready to synthesize.");
+      if (data.kind === "preset") {
+        setValues(data.values);
+        setStatus("Preset loaded. Adjust the parameters or generate audio.");
+      }
       if (data.kind === "error") setStatus(data.message);
       if (data.kind === "audio") {
         setAudioUrl(URL.createObjectURL(new Blob([data.wav], { type: "audio/wav" })));
@@ -40,10 +49,22 @@ export default function App() {
   );
 
   function generate() {
+    if (!values) return;
     setBusy(true);
     setAudioUrl("");
     setStatus("Generating audio…");
-    worker.current?.postMessage({ text, voice } satisfies SynthesisRequest);
+    worker.current?.postMessage({ kind: "synthesize", text, values } satisfies SynthesisRequest);
+  }
+
+  function loadPreset(nextVoice: Voice, nextEmotion: Emotion | undefined) {
+    setVoice(nextVoice);
+    setEmotion(nextEmotion);
+    setBusy(true);
+    worker.current?.postMessage({
+      kind: "preset",
+      voice: nextVoice,
+      emotion: nextEmotion,
+    } satisfies SynthesisRequest);
   }
 
   return (
@@ -74,23 +95,89 @@ export default function App() {
         <p className="hint">
           Japanese kana only. Hiragana is converted to katakana. Up to 500 characters.
         </p>
-        <div className="controls">
+        <fieldset disabled={busy} className="preset-controls">
           <div>
             <label htmlFor="voice">Voice</label>
             <select
               id="voice"
               value={voice}
-              onChange={(event) => setVoice(Number(event.target.value))}
+              onChange={(event) => loadPreset(Number(event.target.value), emotion)}
             >
               {voices.map((value) => (
                 <option key={value} value={value}>
-                  {Voice[value]}
+                  {presetLabel(Voice[value])}
                 </option>
               ))}
             </select>
           </div>
-          <button disabled={busy || !text.trim()}>Generate audio</button>
-        </div>
+          <div>
+            <label htmlFor="emotion">Emotion</label>
+            <select
+              id="emotion"
+              value={emotion ?? ""}
+              onChange={(event) =>
+                loadPreset(
+                  voice,
+                  event.target.value === "" ? undefined : Number(event.target.value),
+                )
+              }
+            >
+              <option value="">None</option>
+              {emotions.map((value) => (
+                <option key={value} value={value}>
+                  {presetLabel(Emotion[value])}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button type="button" onClick={() => loadPreset(voice, emotion)}>
+            Reset parameters
+          </button>
+        </fieldset>
+        <p className="hint">
+          Selecting a preset replaces all parameter values. You can fine-tune them below.
+        </p>
+        <fieldset disabled={busy || !values} className="parameters">
+          <legend>Parameters</legend>
+          {values &&
+            parameters.map(({ key, label, min, hint }) => (
+              <div className="parameter" key={key}>
+                <label htmlFor={key}>{label}</label>
+                <div className="parameter-inputs">
+                  <input
+                    type="range"
+                    aria-label={`${label} slider`}
+                    aria-describedby={`${key}-hint`}
+                    min={min}
+                    max={32767}
+                    step={1}
+                    value={values[key]}
+                    onChange={(event) =>
+                      setValues({ ...values, [key]: Number(event.target.value) })
+                    }
+                  />
+                  <input
+                    id={key}
+                    type="number"
+                    aria-describedby={`${key}-hint`}
+                    min={min}
+                    max={32767}
+                    step={1}
+                    required
+                    value={values[key]}
+                    onChange={(event) => {
+                      const value = event.target.valueAsNumber;
+                      if (Number.isInteger(value)) setValues({ ...values, [key]: value });
+                    }}
+                  />
+                </div>
+                <p id={`${key}-hint`} className="hint">
+                  {hint}
+                </p>
+              </div>
+            ))}
+        </fieldset>
+        <button disabled={busy || !text.trim() || !values}>Generate audio</button>
       </form>
       <p id="status" role="status">
         {status}

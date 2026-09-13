@@ -1,22 +1,51 @@
-import init, { synthesize, Settings, Voice, sampleRate } from "shtts-wasm";
+import init, { synthesize, Settings, Voice, Emotion, sampleRate } from "shtts-wasm";
 import wasmUrl from "shtts-wasm/shtts_bg.wasm?url";
 import { encodeWav } from "./wav";
+import { parameters } from "./parameters";
+import type { ParameterValues } from "./parameters";
 
-export interface SynthesisRequest {
-  text: string;
-  voice: Voice;
-}
+export type SynthesisRequest =
+  | { kind: "preset"; voice: Voice; emotion: Emotion | undefined }
+  | { kind: "synthesize"; text: string; values: ParameterValues };
 export type SynthesisResponse =
-  | { kind: "ready" }
+  | { kind: "preset"; values: ParameterValues }
   | { kind: "audio"; wav: ArrayBuffer }
   | { kind: "error"; message: string };
 
 await init({ module_or_path: wasmUrl });
-postMessage({ kind: "ready" } satisfies SynthesisResponse);
+
+function loadPreset(voice: Voice, emotion?: Emotion) {
+  const settings = Settings.preset(voice, emotion);
+  try {
+    const values: ParameterValues = {
+      pitch: settings.pitch,
+      accent: settings.accent,
+      phraseAccent: settings.phraseAccent,
+      volume: settings.volume,
+      speed: settings.speed,
+      spectral: settings.spectral,
+      fluctuationDepth: settings.fluctuationDepth,
+      fluctuationDelay: settings.fluctuationDelay,
+      echoDepth: settings.echoDepth,
+      echoDelay: settings.echoDelay,
+      ringRate: settings.ringRate,
+    };
+    postMessage({ kind: "preset", values } satisfies SynthesisResponse);
+  } finally {
+    settings.free();
+  }
+}
+
+loadPreset(Voice.Female);
 
 self.addEventListener("message", ({ data }: MessageEvent<SynthesisRequest>) => {
-  const settings = Settings.preset(data.voice);
+  if (data.kind === "preset") {
+    loadPreset(data.voice, data.emotion);
+    return;
+  }
+  const settings = new Settings();
   try {
+    for (const { key } of parameters) settings[key] = data.values[key];
     const kana = data.text
       .slice(0, 500)
       .normalize("NFKC")
