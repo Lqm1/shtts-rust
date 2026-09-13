@@ -1,6 +1,8 @@
 [package]
-name = "shtts-rust"
+name = "shtts"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.88"
+description = "Deterministic, fixed-point SHTTS speech synthesis"
 
 [dependencies]
