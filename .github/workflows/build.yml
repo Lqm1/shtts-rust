@@ -90,7 +90,9 @@ jobs:
 
       - name: Build demo from the release tarball
         working-directory: demo
-        run: npm run build
+        run: |
+          npm run check
+          npm run build
 
       - name: Upload verified npm tarball
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

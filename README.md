@@ -40,7 +40,7 @@ try {
 }
 ```
 
-The returned `Int16Array` owns its samples and remains valid after `settings.free()`. Audio playback and encoding belong to the application. See [the demo worker](demo/src/worker.js) for WAV encoding. Run longer synthesis requests in a Worker to keep the interface responsive.
+The returned `Int16Array` owns its samples and remains valid after `settings.free()`. Audio playback and encoding belong to the application. See [the demo worker](demo/src/worker.ts) and [WAV encoder](demo/src/wav.ts). Run longer synthesis requests in a Worker to keep the interface responsive.
 
 Without a bundler, serve the generated package files together over HTTP, import `shtts.js`, and call `await init()` to load the adjacent WASM file.
 
@@ -103,6 +103,14 @@ Use Rust 1.88 or newer, wasm-pack 0.15.0, Node.js 24, and npm 11. Install the `w
 git clone https://github.com/Lqm1/shtts-rust.git
 cd shtts-rust/demo
 npm ci
+npm run dev
+```
+
+The TypeScript demo was scaffolded with `vp create vite` using the `vanilla-ts` template. It uses Vite+ for development, formatting, linting, and bundling. The published npm version is pinned in `demo/package.json`; browser and worker code have separate strict TypeScript configurations. Run `npm run check` for formatting, linting, and type checks. Demo-specific ignore rules live in `demo/.gitignore`.
+
+To try local Rust changes, run these commands from `demo/`:
+
+```sh
 npm run build:wasm
 npm run pack:wasm
 npm install --no-save --package-lock=false --ignore-scripts ../target/npm/shtts-wasm-0.1.0.tgz
@@ -129,7 +137,7 @@ cargo test --workspace --locked
 cargo test --workspace --release --locked
 ```
 
-CI runs these Rust checks and builds the WASM package and demo. There are no automated demo tests.
+CI runs these Rust checks, checks the demo's formatting, linting, and types, and builds the WASM package and demo. There are no automated demo tests.
 
 ## Release workflow
 
