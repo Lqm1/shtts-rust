@@ -1,13 +1,21 @@
 import init, { synthesize, Settings, Voice, sampleRate } from "shtts-wasm";
 import wasmUrl from "shtts-wasm/shtts_bg.wasm?url";
-import type { SynthesisRequest, SynthesisResponse } from "./messages";
 import { encodeWav } from "./wav";
+
+export interface SynthesisRequest {
+  text: string;
+  voice: Voice;
+}
+export type SynthesisResponse =
+  | { kind: "ready" }
+  | { kind: "audio"; wav: ArrayBuffer }
+  | { kind: "error"; message: string };
 
 await init({ module_or_path: wasmUrl });
 postMessage({ kind: "ready" } satisfies SynthesisResponse);
 
 self.addEventListener("message", ({ data }: MessageEvent<SynthesisRequest>) => {
-  const settings = Settings.preset(Voice[data.voice]);
+  const settings = Settings.preset(data.voice);
   try {
     const kana = data.text
       .slice(0, 500)
@@ -19,7 +27,7 @@ self.addEventListener("message", ({ data }: MessageEvent<SynthesisRequest>) => {
     }
 
     const wav = encodeWav(pcm, sampleRate());
-    postMessage({ kind: "audio", wav } satisfies SynthesisResponse, [wav]);
+    postMessage({ kind: "audio", wav } satisfies SynthesisResponse, { transfer: [wav] });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Speech synthesis failed.";
     postMessage({ kind: "error", message } satisfies SynthesisResponse);

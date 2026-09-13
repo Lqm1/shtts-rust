@@ -106,7 +106,7 @@ npm ci
 npm run dev
 ```
 
-The TypeScript demo was scaffolded with `vp create vite` using the `vanilla-ts` template. It uses Vite+ for development, formatting, linting, and bundling. The published npm version is pinned in `demo/package.json`; browser and worker code have separate strict TypeScript configurations. Run `npm run check` for formatting, linting, and type checks. Demo-specific ignore rules live in `demo/.gitignore`.
+The React + TypeScript demo was scaffolded with `vp create vite` using the `react-ts` template. It uses Vite+ for development, formatting, linting, and bundling. The published npm version is pinned in `demo/package.json`. `App.tsx` contains the UI and state; a Worker handles speech synthesis. Run `npm run check` for formatting, linting, and type checks. Demo-specific ignore rules live in `demo/.gitignore`.
 
 To try local Rust changes, run these commands from `demo/`:
 

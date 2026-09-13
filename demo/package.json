@@ -5,17 +5,23 @@
   "type": "module",
   "scripts": {
     "dev": "vp dev",
-    "build": "npm run typecheck && vp build",
+    "build": "tsc -b && vp build",
+    "lint": "vp lint",
     "preview": "vp preview",
-    "typecheck": "tsc --noEmit && tsc --project tsconfig.worker.json --noEmit",
-    "check": "vp check && npm run typecheck",
+    "check": "vp check && tsc -b",
     "build:wasm": "wasm-pack build ../bindings/web --target web --release --out-dir ../../target/web --out-name shtts -- --locked",
     "pack:wasm": "node ../scripts/package.mjs"
   },
   "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "shtts-wasm": "0.1.0"
   },
   "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
     "typescript": "~6.0.2",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.3.1",
     "vite-plus": "0.3.1"
