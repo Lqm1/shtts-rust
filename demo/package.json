@@ -1,0 +1,16 @@
+{
+  "name": "shtts-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:wasm": "wasm-pack build ../bindings/web --target web --release --out-dir ../../target/web --out-name shtts -- --locked",
+    "pack:wasm": "node ../scripts/package.mjs",
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "test:package": "node tests/package.mjs"
+  },
+  "devDependencies": {
+    "vite": "8.3.0"
+  }
+}

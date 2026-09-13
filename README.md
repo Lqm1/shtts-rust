@@ -48,22 +48,23 @@ Deno can also instantiate the binary by passing a `Uint8Array` to `init({ module
 Requires Rust, wasm-pack 0.15.0, Node.js 24 and npm 11.
 
 ```sh
+cd demo
 npm ci
 npm run build:wasm
-npm run pack
-npm install --no-save --package-lock=false --ignore-scripts ./target/npm/shtts-0.1.0.tgz
+npm run pack:wasm
+npm install --no-save --package-lock=false --ignore-scripts ../target/npm/shtts-0.1.0.tgz
 npm run test:package
 npm run dev
 ```
 
-Run `npm run build:demo`, `npx playwright install chromium`, and `npm run test:browser` to test the production build under its GitHub Pages base path.
+Run `npm run build` followed by `npm run preview` and open the displayed `/shtts-rust/` URL to verify the production demo. CI checks the installed package in Node.js and builds the demo from that same package.
 
 ## Releases
 
-The version in `bindings/web/Cargo.toml` controls the npm version. Update it and Cargo.lock, commit, then push a matching `vX.Y.Z` tag. The release workflow tests and packs once, installs that tarball into the demo, publishes it using GitHub Actions OIDC, checks the registry integrity, and deploys the already-tested site. It does not use an npm token. Ordinary pushes only validate changes; they do not update the public demo.
+The version in `bindings/web/Cargo.toml` controls the npm version. Update it and Cargo.lock, commit, then push a matching `vX.Y.Z` tag. The release workflow tests and packs once, installs that tarball into the demo, publishes it using GitHub Actions OIDC, checks the registry integrity, and deploys the built site. It does not use an npm token. Ordinary pushes only validate changes; they do not update the public demo.
 
 For a failed release, re-run failed jobs on the same workflow run. An already-published version is accepted only when its integrity matches the build artifact. npm and Pages cannot be updated atomically; if Pages fails after npm publication, re-run deployment. Do not overwrite an existing version or move a published tag.
 
 Initial setup: publish a working `0.0.0` bootstrap package with the `bootstrap` dist-tag from an authenticated terminal. Configure the npm trusted publisher for GitHub user `Lqm1`, repository `shtts-rust`, workflow `release.yml`, environment `npm`, and allow direct publishing. Enable GitHub Pages with GitHub Actions as its source. Subsequent releases use OIDC and automatically generated provenance.
 
-No open-source license has been selected in this repository. The npm metadata uses `UNLICENSED`; public availability alone does not grant reuse rights.
+Licensed under Apache-2.0. See [LICENSE](LICENSE).

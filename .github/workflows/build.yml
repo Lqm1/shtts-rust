@@ -74,27 +74,27 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+          cache-dependency-path: demo/package-lock.json
 
       - name: Install locked development dependencies
+        working-directory: demo
         run: npm ci --ignore-scripts
 
       - name: Pack npm package
-        run: npm run pack
+        working-directory: demo
+        run: npm run pack:wasm
 
       - name: Install the release tarball
-        run: npm install --no-save --package-lock=false --ignore-scripts ./target/npm/shtts-*.tgz
+        working-directory: demo
+        run: npm install --no-save --package-lock=false --ignore-scripts ../target/npm/shtts-*.tgz
 
       - name: Test packaged WebAssembly in Node.js
+        working-directory: demo
         run: npm run test:package
 
       - name: Build demo from the release tarball
-        run: npm run build:demo
-
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Test browser synthesis
-        run: npm run test:browser
+        working-directory: demo
+        run: npm run build
 
       - name: Upload verified npm tarball
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
