@@ -352,8 +352,11 @@ mod tests {
             .unwrap();
             let actual = synthesize(&segments, &settings, 11000);
             let expected: Vec<i16> = expected
-                .chunks_exact(2)
-                .map(|b| i16::from_le_bytes(b.try_into().unwrap()))
+                .as_chunks::<2>()
+                .0
+                .iter()
+                .copied()
+                .map(i16::from_le_bytes)
                 .collect();
             let differences = actual.iter().zip(&expected).filter(|(a, b)| a != b).count()
                 + actual.len().abs_diff(expected.len());

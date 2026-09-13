@@ -43,8 +43,11 @@ fn compare(folder: &str, cases: &str, expected_count: usize) {
         let expected = fs::read(directory.join(format!("{name}.pcm"))).unwrap();
         assert_eq!(expected.len() % 2, 0, "truncated PCM: {name}");
         let expected: Vec<_> = expected
-            .chunks_exact(2)
-            .map(|b| i16::from_le_bytes(b.try_into().unwrap()))
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .copied()
+            .map(i16::from_le_bytes)
             .collect();
         let actual = synthesize(text, &settings).unwrap();
         let differences = actual.iter().zip(&expected).filter(|(a, b)| a != b).count()

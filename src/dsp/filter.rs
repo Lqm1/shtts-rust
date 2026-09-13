@@ -229,7 +229,7 @@ mod tests {
         for (index, (&frame, raw)) in data
             .frames
             .iter()
-            .zip(expected.chunks_exact(20))
+            .zip(expected.as_chunks::<20>().0)
             .enumerate()
         {
             let expected: [i16; ORDER] =
@@ -254,8 +254,10 @@ mod tests {
             let amplitude = u16::from_le_bytes(bytes[8..10].try_into().unwrap()) as usize;
             bytes = &bytes[10..];
             let expected: Vec<i32> = bytes[..length * 2]
-                .chunks_exact(2)
-                .map(|b| i32::from(i16::from_le_bytes(b.try_into().unwrap())))
+                .as_chunks::<2>()
+                .0
+                .iter()
+                .map(|&bytes| i32::from(i16::from_le_bytes(bytes)))
                 .collect();
             bytes = &bytes[length * 2..];
             let coef = coefficients(&data.spectrum(data.frames[index]));
