@@ -1,69 +1,146 @@
 # SHTTS
 
-Deterministic, fixed-point speech synthesis written in Rust and distributed as WebAssembly.
+[![Build](https://github.com/Lqm1/shtts-rust/actions/workflows/build.yml/badge.svg)](https://github.com/Lqm1/shtts-rust/actions/workflows/build.yml)
 
-[Browser demo](https://Lqm1.github.io/shtts-rust/) · [npm package](https://www.npmjs.com/package/shtts)
+Deterministic Japanese speech synthesis in Rust, available as a WebAssembly package for JavaScript applications.
 
-Input is katakana, not arbitrary kanji text. Unknown characters are skipped. The demo converts hiragana to katakana before synthesis. Synthesis returns mono signed 16-bit PCM at 11,025 Hz. Audio playback is the application's responsibility.
+[Try the demo](https://lqm1.github.io/shtts-rust/) · [npm package](https://www.npmjs.com/package/shtts-wasm) · [Usage](#javascript-usage) · [Development](#local-development)
 
-## Browser with Vite
+## Overview
+
+- Fixed-point synthesis with repeatable PCM output.
+- Twelve voice presets, sixteen emotion presets, and adjustable synthesis parameters.
+- Mono signed 16-bit PCM at 11,025 Hz.
+- A browser demo that generates audio locally in a Web Worker.
+- One WASM package shared by npm releases and the GitHub Pages demo.
+
+> [!NOTE]
+> The engine accepts Japanese katakana. It skips unknown characters and does not include a kanji reading dictionary or English text-to-speech. The demo also accepts hiragana and converts it to katakana.
+
+## JavaScript usage
+
+```sh
+npm install shtts-wasm
+```
+
+### Browser with Vite
 
 ```js
-import init, { Settings, Voice, synthesize } from 'shtts';
-import wasmUrl from 'shtts/shtts_bg.wasm?url';
+import init, { Settings, Voice, Emotion, synthesize, sampleRate } from 'shtts-wasm';
+import wasmUrl from 'shtts-wasm/shtts_bg.wasm?url';
 
 await init({ module_or_path: wasmUrl });
-const settings = Settings.preset(Voice.Female);
+const settings = Settings.preset(Voice.Female, Emotion.Happy);
 try {
-  const pcm = synthesize('コンニチハ。', settings);
-  console.log(pcm);
+  // Katakana for "hello".
+  const pcm = synthesize('\u30b3\u30f3\u30cb\u30c1\u30cf', settings);
+  console.log(pcm, sampleRate());
 } finally {
   settings.free();
 }
 ```
 
-Use a Web Worker for longer inputs. See `demo/src/worker.js` for WAV encoding and worker usage. Without a bundler, serve the package files together and import `shtts.js`; `await init()` loads the adjacent WASM file over HTTP.
+The returned `Int16Array` owns its samples and remains valid after `settings.free()`. Audio playback and encoding belong to the application. See [the demo worker](demo/src/worker.js) for WAV encoding. Run longer synthesis requests in a Worker to keep the interface responsive.
 
-## Node.js and Bun
+Without a bundler, serve the generated package files together over HTTP, import `shtts.js`, and call `await init()` to load the adjacent WASM file.
 
-Install with `npm install shtts`. This package is ESM. The same WASM binary works outside browsers; explicitly supply its bytes rather than relying on fetching a local file URL.
+### Node.js and Bun
+
+The package uses ES modules. Supply the WASM bytes explicitly because the default browser loader fetches a URL, including a local file URL when imported from disk.
 
 ```js
 import { readFile } from 'node:fs/promises';
-import init, { Settings, synthesize } from 'shtts';
+import init, { Settings, synthesize } from 'shtts-wasm';
 
-await init({ module_or_path: await readFile(new URL(import.meta.resolve('shtts/shtts_bg.wasm'))) });
+const bytes = await readFile(new URL(import.meta.resolve('shtts-wasm/shtts_bg.wasm')));
+await init({ module_or_path: bytes });
 const settings = new Settings();
 try {
-  console.log(synthesize('コンニチハ。', settings));
+  console.log(synthesize('\u30b3\u30f3\u30cb\u30c1\u30cf', settings));
 } finally {
   settings.free();
 }
 ```
 
-Deno can also instantiate the binary by passing a `Uint8Array` to `init({ module_or_path: bytes })`. File access and npm resolution must be configured for that environment. Runtime compatibility depends on the WebAssembly features supported by the runtime, not just the build target name.
+This loading path has been checked locally in Node.js 24 and Bun. Other runtimes, including Deno, can initialize the same binary with `init({ module_or_path: bytes })` if they support its WebAssembly features. Deno has not been verified in this project; configure npm resolution and file permissions for your environment.
 
-## Development
+### API at a glance
 
-Requires Rust, wasm-pack 0.15.0, Node.js 24 and npm 11.
+| Export | Purpose |
+| --- | --- |
+| `init(options)` | Load and instantiate the WASM module asynchronously. |
+| `initSync({ module })` | Initialize from bytes or a compiled `WebAssembly.Module` synchronously. |
+| `new Settings()` | Create neutral synthesis settings. |
+| `Settings.preset(voice, emotion?)` | Apply a voice and optional emotion preset. |
+| `synthesize(text, settings)` | Return mono `Int16Array` samples. |
+| `sampleRate()` | Return the playback rate, 11,025 Hz. |
+| `Voice`, `Emotion` | Select typed presets. |
+
+Settings expose pitch, accent, phrase accent, volume, speed, spectral scaling, fluctuation, echo, and ring modulation controls. Invalid values throw JavaScript errors. See the generated TypeScript declarations shipped with the package for ranges and parameter meanings.
+
+## Rust usage
+
+The core crate has no external dependencies and forbids unsafe code. Use it from this workspace or as a path dependency.
+
+```rust
+use shtts::{synthesize, Voice, VoiceSettings};
+
+fn main() -> Result<(), shtts::InvalidParameter> {
+    let settings = VoiceSettings::from(Voice::Female);
+    let pcm = synthesize("\u{30b3}\u{30f3}\u{30cb}\u{30c1}\u{30cf}", &settings)?;
+    assert!(!pcm.is_empty());
+    Ok(())
+}
+```
+
+The [file output example](examples/synthesize.rs) writes raw little-endian PCM. It does not add a WAV header.
+
+## Local development
+
+Use Rust 1.88 or newer, wasm-pack 0.15.0, Node.js 24, and npm 11. Install the `wasm32-unknown-unknown` Rust target before building WASM.
 
 ```sh
-cd demo
+git clone https://github.com/Lqm1/shtts-rust.git
+cd shtts-rust/demo
 npm ci
 npm run build:wasm
 npm run pack:wasm
-npm install --no-save --package-lock=false --ignore-scripts ../target/npm/shtts-0.1.0.tgz
+npm install --no-save --package-lock=false --ignore-scripts ../target/npm/shtts-wasm-0.1.0.tgz
 npm run dev
 ```
 
-Run `npm run build` followed by `npm run preview` and open the displayed `/shtts-rust/` URL to verify the production demo. CI runs the Rust tests and builds the demo from the packaged WASM. There are no demo-side automated tests.
+Use the tarball filename printed by `pack:wasm` when the package version changes. After Rust changes, rebuild, repack, reinstall the tarball, and restart Vite. For a production preview, run `npm run build` and `npm run preview`, then open `/shtts-rust/` on the preview server.
 
-## Releases
+| Location | Contents |
+| --- | --- |
+| `src/` | Text analysis, prosody, acoustic processing, and synthesis. |
+| `bindings/web/` | wasm-bindgen bindings and the npm release version. |
+| `demo/` | Vite app and its npm tooling. |
+| `scripts/package.mjs` | npm metadata, release version validation, and tarball creation. |
+| `tests/` | Rust regression tests and reference fixtures. |
+| `target/web/`, `target/npm/` | Generated package files and tarballs, excluded from Git. |
 
-The version in `bindings/web/Cargo.toml` controls the npm version. Update it and Cargo.lock, commit, then push a matching `vX.Y.Z` tag. The release workflow tests and packs once, installs that tarball into the demo, publishes it using GitHub Actions OIDC, checks the registry integrity, and deploys the built site. It does not use an npm token. Ordinary pushes only validate changes; they do not update the public demo.
+Run checks from the repository root:
 
-For a failed release, re-run failed jobs on the same workflow run. An already-published version is accepted only when its integrity matches the build artifact. npm and Pages cannot be updated atomically; if Pages fails after npm publication, re-run deployment. Do not overwrite an existing version or move a published tag.
+```sh
+cargo fmt --all --check
+cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo test --workspace --locked
+cargo test --workspace --release --locked
+```
 
-Initial setup: publish a working `0.0.0` bootstrap package with the `bootstrap` dist-tag from an authenticated terminal. Configure the npm trusted publisher for GitHub user `Lqm1`, repository `shtts-rust`, workflow `release.yml`, environment `npm`, and allow direct publishing. Enable GitHub Pages with GitHub Actions as its source. Subsequent releases use OIDC and automatically generated provenance.
+CI runs these Rust checks and builds the WASM package and demo. There are no automated demo tests.
 
-Licensed under Apache-2.0. See [LICENSE](LICENSE).
+## Release workflow
+
+The version in `bindings/web/Cargo.toml` controls the npm release. Update it and `Cargo.lock`, commit, then push a matching `vX.Y.Z` tag. Only stable semantic versions are supported.
+
+1. Run the Rust checks and build WASM once.
+2. Pack the npm tarball and build the demo from that exact package.
+3. Publish through GitHub Actions OIDC, without a stored npm token.
+4. Compare the registry integrity with the packed artifact.
+5. Deploy the built demo to GitHub Pages.
+
+Ordinary pushes validate changes without updating the public demo. The demo displays its package version. If publication or deployment fails, re-run the failed jobs from the same workflow run. An existing npm version is accepted only if its integrity matches the artifact. npm and Pages cannot update atomically; a failed Pages deployment may temporarily leave the previous demo online.
+
+The npm trusted publisher must authorize GitHub owner `Lqm1`, repository `shtts-rust`, workflow `release.yml`, environment `npm`, and direct publishing. GitHub Pages must use GitHub Actions as its source. Initial package registration requires a one-time authenticated publish before configuring this trust relationship. See [npm's trusted publishing documentation](https://docs.npmjs.com/trusted-publishers/) for account setup.

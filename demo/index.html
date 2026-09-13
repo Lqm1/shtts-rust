@@ -1,25 +1,25 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="SHTTSのWebAssembly音声合成デモ。ブラウザでかな文字から音声を生成します。" />
-    <title>SHTTS · 音声合成デモ</title>
+    <meta name="description" content="Try SHTTS speech synthesis in your browser. Turn Japanese kana into audio with WebAssembly." />
+    <title>SHTTS · Speech synthesis demo</title>
   </head>
   <body>
     <main>
       <header><span class="eyebrow">RUST → WEBASSEMBLY</span><a href="https://github.com/Lqm1/shtts-rust">GitHub ↗</a></header>
-      <h1>文字に、声を。</h1>
-      <p class="intro">SHTTSの音声合成をブラウザで試せます。入力した文章はサーバーへ送信されません。</p>
+      <h1>Give text a voice.</h1>
+      <p class="intro">Try SHTTS speech synthesis in your browser. Your text stays on your device.</p>
       <form>
-        <label for="text">読み上げる文章</label>
-        <textarea id="text" maxlength="500" rows="4">こんにちは。おんせいごうせいの、でもです。</textarea>
-        <p class="hint">ひらがな・カタカナで入力してください。最大500文字。</p>
-        <div class="controls"><div><label for="voice">声</label><select id="voice"><option value="Female">女性</option><option value="Male">男性</option><option value="Girl">女の子</option><option value="Boy">男の子</option><option value="Space">宇宙</option></select></div><button id="generate" disabled>音声を生成</button></div>
+        <label for="text">Text to speak</label>
+        <textarea id="text" maxlength="500" rows="4" placeholder="Enter Japanese hiragana or katakana"></textarea>
+        <p class="hint">Japanese kana only. Hiragana is converted to katakana. Up to 500 characters.</p>
+        <div class="controls"><div><label for="voice">Voice</label><select id="voice"><option value="Female">Female</option><option value="Male">Male</option><option value="Girl">Girl</option><option value="Boy">Boy</option><option value="Space">Space</option></select></div><button id="generate" disabled>Generate audio</button></div>
       </form>
-      <p id="status" role="status" aria-live="polite">音声エンジンを読み込んでいます…</p>
-      <audio controls hidden aria-label="生成した音声"></audio>
-      <footer><a id="version" href="https://www.npmjs.com/package/shtts"></a><span>11,025 Hz · mono PCM</span></footer>
+      <p id="status" role="status" aria-live="polite">Loading the speech engine…</p>
+      <audio controls hidden aria-label="Generated speech"></audio>
+      <footer><a id="version" href="https://www.npmjs.com/package/shtts-wasm"></a><span>11,025 Hz · mono PCM</span></footer>
     </main>
     <script type="module" src="/src/main.js"></script>
   </body>

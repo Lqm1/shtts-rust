@@ -12,7 +12,7 @@ if (process.env.GITHUB_REF_TYPE === 'tag' && process.env.GITHUB_REF_NAME !== `v$
   throw new Error('Release tag must match bindings/web/Cargo.toml version');
 }
 Object.assign(pkg, {
-  name: 'shtts', version,
+  name: 'shtts-wasm', version,
   description: 'Deterministic speech synthesis in WebAssembly for browsers and JavaScript runtimes',
   repository: { type: 'git', url: 'git+https://github.com/Lqm1/shtts-rust.git' },
   homepage: 'https://Lqm1.github.io/shtts-rust/',

@@ -51,7 +51,7 @@ jobs:
           JS
       - name: Publish using OIDC
         if: steps.registry.outputs.exists != 'true'
-        run: npm publish ./target/npm/shtts-*.tgz --access public --ignore-scripts
+        run: npm publish ./target/npm/shtts-wasm-*.tgz --access public --ignore-scripts
       - name: Verify published integrity
         run: |
           node --input-type=module <<'JS'

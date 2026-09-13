@@ -86,7 +86,7 @@ jobs:
 
       - name: Install the release tarball
         working-directory: demo
-        run: npm install --no-save --package-lock=false --ignore-scripts ../target/npm/shtts-*.tgz
+        run: npm install --no-save --package-lock=false --ignore-scripts ../target/npm/shtts-wasm-*.tgz
 
       - name: Build demo from the release tarball
         working-directory: demo
