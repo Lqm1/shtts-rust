@@ -2,7 +2,9 @@
 
 [![Build](https://github.com/Lqm1/shtts-rust/actions/workflows/build.yml/badge.svg)](https://github.com/Lqm1/shtts-rust/actions/workflows/build.yml)
 
-Deterministic Japanese speech synthesis in Rust, available as a WebAssembly package for JavaScript applications.
+An independent Rust reimplementation of the SHTTS speech synthesis technology used in some Nintendo DS and Nintendo 3DS games, including titles in the Tomodachi Collection series. Developed for research into its behavior, it provides deterministic Japanese speech synthesis as a native Rust library and a WebAssembly package.
+
+The goal is a lightweight implementation suitable for resource-constrained and embedded applications, without loading a game ROM or running an emulator at runtime.
 
 [Try the demo](https://lqm1.github.io/shtts-rust/) · [npm package](https://www.npmjs.com/package/shtts-wasm) · [Usage](#javascript-usage) · [Development](#local-development)
 
@@ -16,6 +18,8 @@ Deterministic Japanese speech synthesis in Rust, available as a WebAssembly pack
 
 > [!NOTE]
 > The engine accepts Japanese katakana. It skips unknown characters and does not include a kanji reading dictionary or English text-to-speech. The demo also accepts hiragana and converts it to katakana.
+
+The implementation was refined through trial and error against audio captured from original games running in an emulator. Its output matches the covered reference cases exactly, including every PCM sample and the output length. The reference set covers a broad range of inputs and settings, but untested patterns and game-specific variations may still differ.
 
 ## JavaScript usage
 
@@ -155,36 +159,15 @@ The npm trusted publisher must authorize GitHub owner `Lqm1`, repository `shtts-
 
 For UI-only updates, run the **Deploy demo** workflow manually on master. It uses the published npm version pinned in demo/package-lock.json without rebuilding or publishing WASM.
 
-## Research purpose and reproduction method
-
-This project is an independent Rust reimplementation of the SHTTS speech synthesis technology used in some Nintendo DS and Nintendo 3DS games, including titles in the Tomodachi Collection series. It was developed to study and reproduce the behavior of that technology in a lightweight implementation, with embedded use as a design goal.
-
-Reference audio was collected by running the original games in an emulator with a wide range of inputs and settings. The implementation was refined through repeated comparison and trial and error until its output matched the reference PCM sample for sample. For the covered reference cases, this means identical sample values and lengths, rather than merely similar-sounding speech.
-
-The reference set covers a broad range of patterns, but it is not exhaustive. Untested inputs, settings, or game-specific variations may still produce differences. Exact matches on the covered cases should not be interpreted as a guarantee of complete compatibility with every game or every possible input.
-
 ## Related projects
 
-- [dylanpdx/talkmodachi](https://github.com/dylanpdx/talkmodachi) inspired the concept. It exposes Tomodachi Life's speech synthesis through a patched game and a custom build of the Citra emulator.
-- [26d0/shtts-web](https://github.com/26d0/shtts-web) provides an example of a lightweight emulation approach, running the SHTTS engine from Shaberu! DS Oryouri Navi in a browser using a supplied ROM or extracted ARM9 binary.
+- [dylanpdx/talkmodachi](https://github.com/dylanpdx/talkmodachi) inspired the concept. It uses a patched version of Tomodachi Life and a custom Citra build to expose the game's speech synthesis.
+- [26d0/shtts-web](https://github.com/26d0/shtts-web) demonstrates a lightweight emulation approach, running the SHTTS engine from Shaberu! DS Oryouri Navi in a browser using a supplied ROM or extracted ARM9 binary.
 
-Both approaches depend on original game data and execute the original engine through emulation. Avoiding that runtime dependency and its processing overhead motivated this Rust reimplementation. The goal is a small, efficient synthesizer that runs without loading a game ROM or running an emulator, including in resource-constrained applications. This is a design goal, not a claim of benchmarked performance against those projects or support for every embedded target.
+Both rely on original game data and emulation. Removing those runtime requirements and reducing their processing overhead motivated this Rust reimplementation; comparative performance and support for individual embedded targets have not been established.
 
-## Disclaimer
+## Project status and rights
 
-This is an unofficial research project. It is not affiliated with, endorsed by, or sponsored by Nintendo, SHARP, or the developers and rights holders of the original SHTTS technology or the games mentioned here. Product names and trademarks are used only to identify the systems being studied and remain the property of their respective owners.
+This is an unofficial research project, with no affiliation, sponsorship, or endorsement from Nintendo, SHARP, or the original SHTTS developers or rights holders. Product names and trademarks identify the systems being studied and belong to their respective owners. The software is provided as is, without warranties of compatibility or suitability. Its research purpose and repository license do not grant rights to third-party software or game data.
 
-The software is provided as is, without guarantees of complete compatibility, accuracy for untested cases, or suitability for a particular application. The research purpose described here does not grant rights to third-party software, game data, trademarks, or other protected material. The repository's license applies only to material that its contributors are entitled to license.
-
-## Rights-holder removal requests
-
-Removal requests are considered only when submitted by a legitimate rights holder in the original SHTTS technology or project, or by a representative authorized to act on that rights holder's behalf. Requests from unrelated third parties are not accepted as rights-holder removal requests.
-
-To submit a request, open an [issue in this repository](https://github.com/Lqm1/shtts-rust/issues) identifying:
-
-- The rights holder and your relationship to them.
-- The specific files, content, or distribution you are requesting be removed.
-- The rights involved and the basis for the request.
-- A way to verify your authority and contact you for follow-up.
-
-Do not post confidential documents or personal identification in a public issue. If private verification is necessary, ask the maintainer to arrange an appropriate contact channel. Verified requests will be reviewed in good faith, and the relevant material will be removed or otherwise addressed as appropriate.
+Removal requests are accepted only from legitimate rights holders in the original SHTTS technology or project, or their authorized representatives. Please open an [issue](https://github.com/Lqm1/shtts-rust/issues) identifying the rights holder, the material concerned, the basis for the request, and a way to verify your authority. Do not post confidential documents or personal identification publicly; ask for a private contact channel if needed. Verified requests will be reviewed in good faith, with the relevant material removed or otherwise addressed as appropriate.
