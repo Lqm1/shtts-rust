@@ -4,6 +4,7 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -67,3 +68,42 @@ jobs:
           path: target/web/
           if-no-files-found: error
           retention-days: 14
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install locked development dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Pack npm package
+        run: npm run pack
+
+      - name: Install the release tarball
+        run: npm install --no-save --package-lock=false --ignore-scripts ./target/npm/shtts-*.tgz
+
+      - name: Test packaged WebAssembly in Node.js
+        run: npm run test:package
+
+      - name: Build demo from the release tarball
+        run: npm run build:demo
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Test browser synthesis
+        run: npm run test:browser
+
+      - name: Upload verified npm tarball
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: npm-package
+          path: target/npm/
+          if-no-files-found: error
+
+      - name: Upload verified demo
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: demo/dist/
