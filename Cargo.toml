@@ -6,3 +6,15 @@ rust-version = "1.88"
 description = "Deterministic, fixed-point SHTTS speech synthesis"
 
 [dependencies]
+
+[workspace]
+members = ["bindings/web"]
+default-members = ["."]
+resolver = "3"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"

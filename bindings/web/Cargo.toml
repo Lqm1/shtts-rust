@@ -1,0 +1,17 @@
+[package]
+name = "shtts-web"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+description = "WebAssembly bindings for SHTTS"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+shtts = { path = "../.." }
+wasm-bindgen = "=0.2.120"
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O3", "--enable-bulk-memory", "--strip-debug", "--strip-producers"]
