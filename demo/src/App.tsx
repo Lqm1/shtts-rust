@@ -69,126 +69,149 @@ export default function App() {
 
   return (
     <main>
-      <header>
-        <span className="eyebrow">RUST → WEBASSEMBLY</span>
+      <header className="topbar">
+        <span className="brand">
+          SHTTS <small>VOICE STUDIO</small>
+        </span>
         <a href="https://github.com/Lqm1/shtts-rust">GitHub ↗</a>
       </header>
-      <h1>Give text a voice.</h1>
-      <p className="intro">
-        Try SHTTS speech synthesis in your browser. Your text stays on your device.
-      </p>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          generate();
-        }}
-      >
-        <label htmlFor="text">Text to speak</label>
-        <textarea
-          id="text"
-          maxLength={500}
-          rows={4}
-          placeholder="Enter Japanese hiragana or katakana"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-        />
-        <p className="hint">
-          Japanese kana only. Hiragana is converted to katakana. Up to 500 characters.
-        </p>
-        <fieldset disabled={busy} className="preset-controls">
-          <div>
-            <label htmlFor="voice">Voice</label>
-            <select
-              id="voice"
-              value={voice}
-              onChange={(event) => loadPreset(Number(event.target.value), emotion)}
-            >
-              {voices.map((value) => (
-                <option key={value} value={value}>
-                  {presetLabel(Voice[value])}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="emotion">Emotion</label>
-            <select
-              id="emotion"
-              value={emotion ?? ""}
-              onChange={(event) =>
-                loadPreset(
-                  voice,
-                  event.target.value === "" ? undefined : Number(event.target.value),
-                )
-              }
-            >
-              <option value="">None</option>
-              {emotions.map((value) => (
-                <option key={value} value={value}>
-                  {presetLabel(Emotion[value])}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button type="button" onClick={() => loadPreset(voice, emotion)}>
-            Reset parameters
-          </button>
-        </fieldset>
-        <p className="hint">
-          Selecting a preset replaces all parameter values. You can fine-tune them below.
-        </p>
-        <fieldset disabled={busy || !values} className="parameters">
-          <legend>Parameters</legend>
-          {values &&
-            parameters.map(({ key, label, min, hint }) => (
-              <div className="parameter" key={key}>
-                <label htmlFor={key}>{label}</label>
-                <div className="parameter-inputs">
-                  <input
-                    type="range"
-                    aria-label={`${label} slider`}
-                    aria-describedby={`${key}-hint`}
-                    min={min}
-                    max={32767}
-                    step={1}
-                    value={values[key]}
-                    onChange={(event) =>
-                      setValues({ ...values, [key]: Number(event.target.value) })
-                    }
-                  />
-                  <input
-                    id={key}
-                    type="number"
-                    aria-describedby={`${key}-hint`}
-                    min={min}
-                    max={32767}
-                    step={1}
-                    required
-                    value={values[key]}
-                    onChange={(event) => {
-                      const value = event.target.valueAsNumber;
-                      if (Number.isInteger(value)) setValues({ ...values, [key]: value });
-                    }}
-                  />
-                </div>
-                <p id={`${key}-hint`} className="hint">
-                  {hint}
-                </p>
+      <div className="studio">
+        <h1>Speech synthesis</h1>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            generate();
+          }}
+        >
+          <section className="speech-panel" id="speech">
+            <h2>
+              <span>01</span> Text
+            </h2>
+            <label htmlFor="text">Text to speak</label>
+            <textarea
+              id="text"
+              maxLength={500}
+              rows={4}
+              placeholder="Enter Japanese hiragana or katakana"
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+            />
+            <p className="hint">
+              Japanese kana only. Hiragana is converted to katakana. Up to 500 characters.
+            </p>
+          </section>
+          <section className="preset-panel" id="presets">
+            <h2>
+              <span>02</span> Presets
+            </h2>
+            <fieldset disabled={busy} className="preset-controls">
+              <div>
+                <label htmlFor="voice">Voice</label>
+                <select
+                  id="voice"
+                  value={voice}
+                  onChange={(event) => loadPreset(Number(event.target.value), emotion)}
+                >
+                  {voices.map((value) => (
+                    <option key={value} value={value}>
+                      {presetLabel(Voice[value])}
+                    </option>
+                  ))}
+                </select>
               </div>
-            ))}
-        </fieldset>
-        <button disabled={busy || !text.trim() || !values}>Generate audio</button>
-      </form>
-      <p id="status" role="status">
-        {status}
-      </p>
-      {audioUrl && <audio controls src={audioUrl} aria-label="Generated speech" />}
-      <footer>
-        <a href="https://www.npmjs.com/package/shtts-wasm">
-          {pkg.name} v{pkg.version}
-        </a>
-        <span>11,025 Hz · mono PCM</span>
-      </footer>
+              <div>
+                <label htmlFor="emotion">Emotion</label>
+                <select
+                  id="emotion"
+                  value={emotion ?? ""}
+                  onChange={(event) =>
+                    loadPreset(
+                      voice,
+                      event.target.value === "" ? undefined : Number(event.target.value),
+                    )
+                  }
+                >
+                  <option value="">None</option>
+                  {emotions.map((value) => (
+                    <option key={value} value={value}>
+                      {presetLabel(Emotion[value])}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button type="button" onClick={() => loadPreset(voice, emotion)}>
+                Reset parameters
+              </button>
+            </fieldset>
+            <p className="hint">
+              Selecting a preset replaces all parameter values. You can fine-tune them below.
+            </p>
+          </section>
+          <section className="tuning-panel" id="parameters">
+            <h2>
+              <span>03</span> Parameters
+            </h2>
+            <p className="section-caption">Adjust with sliders or enter exact values.</p>
+            <fieldset
+              disabled={busy || !values}
+              className="parameters"
+              aria-label="Voice parameters"
+            >
+              {values &&
+                parameters.map(({ key, label, min, hint }) => (
+                  <div className="parameter" key={key}>
+                    <label htmlFor={key}>{label}</label>
+                    <div className="parameter-inputs">
+                      <input
+                        type="range"
+                        aria-label={`${label} slider`}
+                        aria-describedby={`${key}-hint`}
+                        min={min}
+                        max={32767}
+                        step={1}
+                        value={values[key]}
+                        onChange={(event) =>
+                          setValues({ ...values, [key]: Number(event.target.value) })
+                        }
+                      />
+                      <input
+                        id={key}
+                        type="number"
+                        aria-describedby={`${key}-hint`}
+                        min={min}
+                        max={32767}
+                        step={1}
+                        required
+                        value={values[key]}
+                        onChange={(event) => {
+                          const value = event.target.valueAsNumber;
+                          if (Number.isInteger(value)) setValues({ ...values, [key]: value });
+                        }}
+                      />
+                    </div>
+                    <p id={`${key}-hint`} className="hint">
+                      {hint}
+                    </p>
+                  </div>
+                ))}
+            </fieldset>
+          </section>
+          <div className="play-panel">
+            <span>Audio is generated on your device.</span>
+            <button disabled={busy || !text.trim() || !values}>▶ Generate audio</button>
+          </div>
+        </form>
+        <p id="status" role="status">
+          {status}
+        </p>
+        {audioUrl && <audio controls src={audioUrl} aria-label="Generated speech" />}
+        <footer>
+          <a href="https://www.npmjs.com/package/shtts-wasm">
+            {pkg.name} v{pkg.version}
+          </a>
+          <span>11,025 Hz · mono PCM</span>
+        </footer>
+      </div>
     </main>
   );
 }

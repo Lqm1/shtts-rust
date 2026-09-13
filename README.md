@@ -152,3 +152,5 @@ The version in `bindings/web/Cargo.toml` controls the npm release. Update it and
 Ordinary pushes validate changes without updating the public demo. The demo displays its package version. If publication or deployment fails, re-run the failed jobs from the same workflow run. An existing npm version is accepted only if its integrity matches the artifact. npm and Pages cannot update atomically; a failed Pages deployment may temporarily leave the previous demo online.
 
 The npm trusted publisher must authorize GitHub owner `Lqm1`, repository `shtts-rust`, workflow `release.yml`, environment `npm`, and direct publishing. GitHub Pages must use GitHub Actions as its source. Initial package registration requires a one-time authenticated publish before configuring this trust relationship. See [npm's trusted publishing documentation](https://docs.npmjs.com/trusted-publishers/) for account setup.
+
+For UI-only updates, run the **Deploy demo** workflow manually on master. It uses the published npm version pinned in demo/package-lock.json without rebuilding or publishing WASM.
