@@ -20,5 +20,6 @@ for (const target of targets) {
   const directory = `target/package/${target}`;
   run('wasm-bindgen', ['target/wasm32-unknown-unknown/release/shtts_web.wasm', '--target', target, '--out-dir', directory, '--out-name', 'shtts']);
   const wasm = `${directory}/shtts_bg.wasm`;
-  run(optimizer, [wasm, '-o', wasm, '-O3', '--enable-bulk-memory', '--enable-nontrapping-float-to-int', '--strip-debug', '--strip-producers']);
+  // Older Binaryen releases require explicit permission for Rust's sign-extension instructions.
+  run(optimizer, [wasm, '-o', wasm, '-O3', '--enable-sign-ext', '--enable-bulk-memory', '--enable-nontrapping-float-to-int', '--strip-debug', '--strip-producers']);
 }
