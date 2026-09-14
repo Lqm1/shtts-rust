@@ -1,5 +1,4 @@
-import init, { synthesize, Settings, Voice, Emotion, sampleRate } from "shtts-wasm";
-import wasmUrl from "shtts-wasm/shtts_bg.wasm?url";
+import { synthesize, Settings, Voice, Emotion, sampleRate } from "shtts-wasm/bundler";
 import { encodeWav } from "./wav";
 import { parameters } from "./parameters";
 import type { ParameterValues } from "./parameters";
@@ -11,8 +10,6 @@ export type SynthesisResponse =
   | { kind: "preset"; values: ParameterValues }
   | { kind: "audio"; wav: ArrayBuffer }
   | { kind: "error"; message: string };
-
-await init({ module_or_path: wasmUrl });
 
 function loadPreset(voice: Voice, emotion?: Emotion) {
   const settings = Settings.preset(voice, emotion);

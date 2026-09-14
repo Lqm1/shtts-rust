@@ -27,13 +27,11 @@ The implementation was refined through trial and error against audio captured fr
 npm install shtts-wasm
 ```
 
-### Browser with Vite
+### Browser with Vite 8.1 or newer
 
 ```js
-import init, { Settings, Voice, Emotion, synthesize, sampleRate } from 'shtts-wasm';
-import wasmUrl from 'shtts-wasm/shtts_bg.wasm?url';
+import { Settings, Voice, Emotion, synthesize, sampleRate } from 'shtts-wasm/bundler';
 
-await init({ module_or_path: wasmUrl });
 const settings = Settings.preset(Voice.Female, Emotion.Happy);
 try {
   // Katakana for "hello".
@@ -46,18 +44,26 @@ try {
 
 The returned `Int16Array` owns its samples and remains valid after `settings.free()`. Audio playback and encoding belong to the application. See [the demo worker](demo/src/worker.ts) and [WAV encoder](demo/src/wav.ts). Run longer synthesis requests in a Worker to keep the interface responsive.
 
-Without a bundler, serve the generated package files together over HTTP, import `shtts.js`, and call `await init()` to load the adjacent WASM file.
+[Vite 8.1 added native WASM ESM integration](https://vite.dev/blog/announcing-vite8-1), so the `bundler` target initializes automatically without a WASM plugin. The demo uses this target in its module Worker. The UI imports only `Voice` and `Emotion` from `web`, which avoids initializing another WASM instance on the main thread. Direct WASM imports require top-level await support; the demo emits ES module workers with `worker: { format: 'es' }`.
+
+For older Vite versions without WASM ESM integration, or when explicit initialization is needed, use the `web` target with Vite's asset URL handling:
+
+```js
+import init, { Settings, synthesize } from 'shtts-wasm/web';
+import wasmUrl from 'shtts-wasm/web/shtts_bg.wasm?url';
+
+await init({ module_or_path: wasmUrl });
+```
+
+Without a bundler, serve the package files together over HTTP, import `web/shtts.js`, and call `await init()` to load the adjacent WASM file. Always choose a target subpath; the package has no root import entry.
 
 ### Node.js and Bun
 
-The package uses ES modules. Supply the WASM bytes explicitly because the default browser loader fetches a URL, including a local file URL when imported from disk.
+The Node.js target loads its adjacent WASM file synchronously. It works with CommonJS `require` and with imports in Node.js and Bun; no explicit initialization is needed.
 
 ```js
-import { readFile } from 'node:fs/promises';
-import init, { Settings, synthesize } from 'shtts-wasm';
+import { Settings, synthesize } from 'shtts-wasm/nodejs';
 
-const bytes = await readFile(new URL(import.meta.resolve('shtts-wasm/shtts_bg.wasm')));
-await init({ module_or_path: bytes });
 const settings = new Settings();
 try {
   console.log(synthesize('\u30b3\u30f3\u30cb\u30c1\u30cf', settings));
@@ -66,14 +72,32 @@ try {
 }
 ```
 
-This loading path has been checked locally in Node.js 24 and Bun. Other runtimes, including Deno, can initialize the same binary with `init({ module_or_path: bytes })` if they support its WebAssembly features. Deno has not been verified in this project; configure npm resolution and file permissions for your environment.
+For CommonJS, use `const { Settings, synthesize } = require('shtts-wasm/nodejs')`.
+
+### Available targets
+
+Every target in [wasm-bindgen's deployment guide](https://wasm-bindgen.github.io/wasm-bindgen/reference/deployment.html) is included, with its generated JavaScript, TypeScript declarations, and WASM file.
+
+| Package subpath | Loading behavior |
+| --- | --- |
+| `shtts-wasm/web` | Browser ES module with explicit initialization. Call `await init()`; with Vite, pass the explicit `?url` asset as above. |
+| `shtts-wasm/nodejs` | CommonJS with synchronous initialization. Suitable for Node.js and Bun. |
+| `shtts-wasm/bundler` | WASM ES module imports with automatic initialization. Recommended for Vite 8.1+; also supported by webpack with `experiments.asyncWebAssembly: true`. Older Vite versions need a WASM plugin or the `web` target. |
+| `shtts-wasm/deno` | ES module with top-level asynchronous initialization. In Deno, import from `npm:shtts-wasm/deno`; allow reads for the adjacent WASM file. |
+| `shtts-wasm/no-modules` | Classic script exposing `wasm_bindgen`. Load `no-modules/shtts.js` with a script tag, then call `await wasm_bindgen({ module_or_path: './no-modules/shtts_bg.wasm' })`. This target is not an ES module and cannot provide named imports. |
+| `shtts-wasm/experimental-nodejs-module` | Node.js ES module with synchronous initialization. The upstream target is experimental. |
+| `shtts-wasm/module` | Source phase WASM imports with automatic initialization. Requires runtime or bundler support for `import source`; Node.js 24 uses `--experimental-wasm-modules`. |
+
+The `shtts-wasm/<target>/shtts.js`, `shtts.d.ts`, and `shtts_bg.wasm` files are also exported under each target directory. Keep each generated directory intact when serving files directly.
+
+Rust is compiled once, then wasm-bindgen generates each target separately. We retain each target's WASM rather than rewriting generated loaders to share one file. The current optimized binaries are byte-identical, but sharing would couple packaging to generated loader syntax and future target differences. Separate files cost package size and preserve the official outputs without custom runtime code.
 
 ### API at a glance
 
 | Export | Purpose |
 | --- | --- |
-| `init(options)` | Load and instantiate the WASM module asynchronously. |
-| `initSync({ module })` | Initialize from bytes or a compiled `WebAssembly.Module` synchronously. |
+| `init(options)` | Load and instantiate WASM asynchronously on the web target. |
+| `initSync({ module })` | Initialize the web target from bytes or a compiled `WebAssembly.Module` synchronously. |
 | `new Settings()` | Create neutral synthesis settings. |
 | `Settings.preset(voice, emotion?)` | Apply a voice and optional emotion preset. |
 | `synthesize(text, settings)` | Return mono `Int16Array` samples. |
@@ -101,7 +125,7 @@ The [file output example](examples/synthesize.rs) writes raw little-endian PCM. 
 
 ## Local development
 
-Use Rust 1.88 or newer, wasm-pack 0.15.0, Node.js 24, and npm 11. Install the `wasm32-unknown-unknown` Rust target before building WASM.
+Use Rust 1.88 or newer, wasm-bindgen-cli 0.2.120, Binaryen's `wasm-opt`, Node.js 24, and npm 11. Install the `wasm32-unknown-unknown` Rust target before building WASM. Install the matching CLI with `cargo install wasm-bindgen-cli --version 0.2.120 --locked`. Put `wasm-opt` on PATH or set `WASM_OPT` to its executable path. The build script checks the CLI version against the binding crate's pinned dependency.
 
 ```sh
 git clone https://github.com/Lqm1/shtts-rust.git
@@ -117,7 +141,7 @@ To try local Rust changes, run these commands from `demo/`:
 ```sh
 npm run build:wasm
 npm run pack:wasm
-npm install --no-save --package-lock=false --ignore-scripts ../target/npm/shtts-wasm-0.1.0.tgz
+npm install --no-save --package-lock=false --ignore-scripts ../target/npm/shtts-wasm-0.2.0.tgz
 npm run dev
 ```
 
@@ -129,8 +153,9 @@ Use the tarball filename printed by `pack:wasm` when the package version changes
 | `bindings/web/` | wasm-bindgen bindings and the npm release version. |
 | `demo/` | Vite app and its npm tooling. |
 | `scripts/package.mjs` | npm metadata, release version validation, and tarball creation. |
+| `scripts/build-wasm.mjs` | One Cargo build, then binding generation and WASM optimization for all seven targets. |
 | `tests/` | Rust regression tests and reference fixtures. |
-| `target/web/`, `target/npm/` | Generated package files and tarballs, excluded from Git. |
+| `target/package/`, `target/npm/` | Generated package files and tarballs, excluded from Git. |
 
 Run checks from the repository root:
 
@@ -141,7 +166,7 @@ cargo test --workspace --locked
 cargo test --workspace --release --locked
 ```
 
-CI runs these Rust checks, checks the demo's formatting, linting, and types, and builds the WASM package and demo. There are no automated demo tests.
+CI runs these Rust checks, checks the demo's formatting, linting, and types, and builds all WASM targets and the demo from the packed tarball. The Vite demo build also validates asset bundling. There are no automated browser UI tests.
 
 ## Release workflow
 

@@ -38,8 +38,7 @@ jobs:
       - name: Cache Rust dependencies and build tools
         uses: Swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
         with:
-          key: wasm-pack-0.15.0
-          cache-directories: ~/.cache/.wasm-pack
+          key: wasm-bindgen-0.2.120
 
       - name: Check formatting
         run: cargo fmt --all --check
@@ -53,21 +52,11 @@ jobs:
       - name: Run release tests
         run: cargo test --workspace --release --locked
 
-      - name: Install wasm-pack
-        run: cargo install wasm-pack --version 0.15.0 --locked
-
-      - name: Build optimized WebAssembly package
-        run: >-
-          wasm-pack build bindings/web --target web --release
-          --out-dir ../../target/web --out-name shtts -- --locked
-
-      - name: Upload WebAssembly package
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: shtts-web
-          path: target/web/
-          if-no-files-found: error
-          retention-days: 14
+      - name: Install WebAssembly build tools
+        run: |
+          cargo install wasm-bindgen-cli --version 0.2.120 --locked
+          sudo apt-get update
+          sudo apt-get install -y binaryen
 
       - name: Set up Node.js
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
@@ -82,7 +71,9 @@ jobs:
 
       - name: Pack npm package
         working-directory: demo
-        run: npm run pack:wasm
+        run: |
+          npm run build:wasm
+          npm run pack:wasm
 
       - name: Install the release tarball
         working-directory: demo

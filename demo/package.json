@@ -9,7 +9,7 @@
     "lint": "vp lint",
     "preview": "vp preview",
     "check": "vp check && tsc -b",
-    "build:wasm": "wasm-pack build ../bindings/web --target web --release --out-dir ../../target/web --out-name shtts -- --locked",
+    "build:wasm": "node ../scripts/build-wasm.mjs",
     "pack:wasm": "node ../scripts/package.mjs"
   },
   "dependencies": {

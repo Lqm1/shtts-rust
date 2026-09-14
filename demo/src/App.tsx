@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Voice, Emotion } from "shtts-wasm";
+// Only import enum values here; the bundler entry initializes WASM in the Worker.
+import { Voice, Emotion } from "shtts-wasm/web";
 import pkg from "shtts-wasm/package.json";
 import type { SynthesisRequest, SynthesisResponse } from "./worker";
 import { parameters } from "./parameters";

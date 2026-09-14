@@ -61,7 +61,7 @@ export const parameters = [
     hint: "Modulation rate in native units; 0 disables the effect.",
   },
 ] satisfies {
-  key: keyof import("shtts-wasm").Settings;
+  key: keyof import("shtts-wasm/bundler").Settings;
   label: string;
   min: number;
   hint: string;
