@@ -8,11 +8,11 @@ const targets = (await readdir('target/package', { withFileTypes: true }))
   .filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
 if (targets.length === 0) throw new Error('Run build:wasm before packing');
 const pkg = { type: 'module', files: targets };
-const cargo = await readFile('bindings/web/Cargo.toml', 'utf8');
+const cargo = await readFile('bindings/wasm/Cargo.toml', 'utf8');
 const version = process.env.BOOTSTRAP_VERSION || cargo.match(/^version = "([^"]+)"/m)[1];
 if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('This workflow only publishes stable semantic versions');
 if (process.env.GITHUB_REF_TYPE === 'tag' && process.env.GITHUB_REF_NAME !== `v${version}`) {
-  throw new Error('Release tag must match bindings/web/Cargo.toml version');
+  throw new Error('Release tag must match bindings/wasm/Cargo.toml version');
 }
 Object.assign(pkg, {
   name: 'shtts-wasm', version,

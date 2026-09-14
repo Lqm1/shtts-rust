@@ -150,7 +150,7 @@ Use the tarball filename printed by `pack:wasm` when the package version changes
 | Location | Contents |
 | --- | --- |
 | `src/` | Text analysis, prosody, acoustic processing, and synthesis. |
-| `bindings/web/` | wasm-bindgen bindings and the npm release version. |
+| `bindings/wasm/` | wasm-bindgen bindings and the npm release version. |
 | `demo/` | Vite app and its npm tooling. |
 | `scripts/package.mjs` | npm metadata, release version validation, and tarball creation. |
 | `scripts/build-wasm.mjs` | One Cargo build, then binding generation and WASM optimization for all seven targets. |
@@ -170,7 +170,7 @@ CI runs these Rust checks, checks the demo's formatting, linting, and types, and
 
 ## Release workflow
 
-The version in `bindings/web/Cargo.toml` controls the npm release. Update it and `Cargo.lock`, commit, then push a matching `vX.Y.Z` tag. Only stable semantic versions are supported.
+The version in `bindings/wasm/Cargo.toml` controls the npm release. Update it and `Cargo.lock`, commit, then push a matching `vX.Y.Z` tag. Only stable semantic versions are supported.
 
 1. Run the Rust checks and build WASM once.
 2. Pack the npm tarball and build the demo from that exact package.

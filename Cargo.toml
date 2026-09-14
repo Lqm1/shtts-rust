@@ -9,7 +9,7 @@ license = "Apache-2.0"
 [dependencies]
 
 [workspace]
-members = ["bindings/web"]
+members = ["bindings/wasm"]
 default-members = ["."]
 resolver = "3"
 

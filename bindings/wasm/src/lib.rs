@@ -1,4 +1,4 @@
-//! Typed browser bindings for SHTTS.
+//! Typed WebAssembly bindings for SHTTS.
 #![forbid(unsafe_code)]
 
 mod presets;
